@@ -1,14 +1,15 @@
-
-//import data from './data/data.json';
+import express from 'express';
 var Gpio = require('onoff').Gpio; //include onoff to interact with the GPIO
 var LED = new Gpio(25, 'out'); //use GPIO pin 4, and specify that it is output
 var LedR = new Gpio(5, 'out'); //use GPIO pin 4, and specify that it is output
 var LedG = new Gpio(6, 'out'); //use GPIO pin 4, and specify that it is output
 var LedB = new Gpio(13, 'out'); //use GPIO pin 4, and specify that it is output
-//var blinkInterval = setInterval(blinkLED, 250); //run the blinkLED function every 250ms
 
-const express = require('express');
+const app  = express();
 const PORT = 3000;
+var server = app.listen(PORT);
+var io = require('socket.io').listen(server);
+
 
 const record = require('node-record-lpcm16');
 const Speaker = require('speaker');
@@ -35,15 +36,15 @@ const config = {
 
   },
 };
- 
+
 const assistant = new GoogleAssistant(config.auth);
  
 // starts a new conversation with the assistant
 const startConversation = (conversation) => {
   // setup the conversation and send data to it
   // for a full example, see `examples/mic-speaker.js`
- // console.log('Say something!');
- // let openMicAgain = false;
+ console.log('Say something!');
+  let openMicAgain = false;
   
   conversation
     // send the audio buffer to the speaker
@@ -51,12 +52,16 @@ const startConversation = (conversation) => {
       speakerHelper.update(data);
     })
     // done speaking, close the mic
-    //.on('end-of-utterance', () => record.stop())
+    .on('end-of-utterance', () => record.stop())
     // just to spit out to the console what was said (as we say it)
-    //.on('transcription', data => console.log('Transcription:', data.transcription, ' --- Done:', data.done))
+    .on('transcription', data => console.log('Transcription:', data.transcription, ' --- Done:', data.done))
     // what the assistant said back
-    .on('response', text => console.log('Assistant Text Response:', text))
+    .on('response', text => {
+        console.log('Assistant Text Response:', text);
+        io.emit('message',text);    
+    })
     // if we've requested a volume level change, get the percentage of the new level
+    
     .on('volume-percent', percent => console.log('New Volume Percent:', percent))
     // the device needs to complete an action
     .on('device-action', action => {
@@ -115,10 +120,13 @@ const startConversation = (conversation) => {
 
     .on('ended', (error, continueConversation) => {
       if (error) console.log('Conversation Ended Error:', error);
-      else if (continueConversation) { promptForInput();}
+      else if (continueConversation) {
+        openMicAgain = true;
+       // startConversation;
+       }
       else {
       console.log('Conversation Complete');
-      promptForInput();
+      //startConversation;
       //conversation.end();
       }
     })
@@ -144,72 +152,37 @@ const startConversation = (conversation) => {
     })
     .on('close', () => {
       console.log('Assistant Finished Speaking');
-      //if (openMicAgain) assistant.start(config.conversation);
+      if (openMicAgain) assistant.start(config.conversation,startConversation);
     });
 };
 
-const promptForInput = () => {
-  // type what you want to ask the assistant
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  rl.question('Type your request: ', (request) => {
-    // start the conversation
-    config.conversation.textQuery = request;
-    assistant.start(config.conversation, startConversation);
-
-    rl.close();
-  });
+const promptForInput = (pData) => {   
+      config.conversation.textQuery = pData;
+      assistant.start(config.conversation);
 };
+
 
 // setup the assistant
 assistant
-  .on('ready', promptForInput)
-  //.on('started', startConversation)
-  .on('error', (error) => {
-    console.log('Assistant Error:', error);
+.on('ready', () => {
+ // start a conversation!
+ //assistant.start(config.conversation);
+})
+//.on('started', startConversation)
+.on('error', (error) => {
+  console.log('Assistant Error:', error);
+});
+
+
+app.get('/', function(req, res,next) {
+    res.sendFile(__dirname + '/index.html');
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+io.on('connection', function (socket) {
+  socket.on('light', function(data) { //get light switch status from client
+    promptForInput(data);
   });
+});
 
-/*
-app.get('/',(req, res) =>
-    res.json(data)
-);
-
-app.post('/NewItem',(req, res) =>
-    res.send(`a post request with / route on port ${PORT}`)
-);
-
-app.put('/Item',(req, res) =>
-    res.send(`a put request with / route on port ${PORT}`)
-);
-
-app.delete('/Item',(req, res) =>
-    res.send(`a delete request with / route on port ${PORT}`)
-);
-
-app.listen(PORT,()=>{
-    console.log(`your server is running on port ${PORT}`);
-    console.log(data);
-}
-);
-*/
-
-/*
-function blinkLED() { //function to start blinking
-    if (LED.readSync() === 0) { //check the pin state, if the state is 0 (or off)
-      LED.writeSync(1); //set pin state to 1 (turn LED on)
-    } else {
-      LED.writeSync(0); //set pin state to 0 (turn LED off)
-    }
-  }
-  
-  function endBlink() { //function to stop blinking
-    clearInterval(blinkInterval); // Stop blink intervals
-    LED.writeSync(0); // Turn LED off
-    LED.unexport(); // Unexport GPIO to free resources
-  }
-  
-  setTimeout(endBlink, 5000); //stop blinking after 5 seconds
-  */
