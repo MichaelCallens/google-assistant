@@ -63,7 +63,7 @@
 
         function SendData() {      
             var textData = document.getElementById("TextInput");
-            socket.emit("light", TextInput.value);        
+            socket.emit("textInput", TextInput.value);        
             $('.list-unstyled').append($('<li>').addClass("mar-btm").append($('<div>').addClass("media-body pad-hor speech-right").append($('<div>').addClass("speech").text(TextInput.value))));
         }
 
