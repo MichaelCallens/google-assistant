@@ -5,11 +5,13 @@ var LED = new Gpio(25, 'out');
 var LedR = new Gpio(5, 'out'); 
 var LedG = new Gpio(6, 'out'); 
 var LedB = new Gpio(13, 'out'); 
+var pushButton = new Gpio(21, 'in', 'both');
 
 const app  = express();
 const PORT = 3000;
 var server = app.listen(PORT);
 var io = require('socket.io').listen(server);
+var InputType="";
 
 const record = require('node-record-lpcm16');
 const Speaker = require('speaker');
@@ -17,6 +19,7 @@ const path = require('path');
 const GoogleAssistant = require('google-assistant');
 const speakerHelper = require('./examples/speaker-helper');
 const readline = require('readline');
+
 
 const config = {
   auth: {
@@ -34,6 +37,7 @@ const config = {
       sampleRateOut: 24000, // supported are 16000 / 24000 (defaults to 24000)
     },
     lang: 'en-US', // language code for input/output (defaults to en-US)
+    textQuery: undefined,
   },
 };
 
@@ -44,7 +48,6 @@ const startConversation = (conversation) => {
   // setup the conversation and send data to it
   // for a full example, see `examples/mic-speaker.js`
  console.log('Say something!');
-  let openMicAgain = false;
   
   conversation
     // send the audio buffer to the speaker
@@ -68,7 +71,7 @@ const startConversation = (conversation) => {
     .on('volume-percent', percent => console.log('New Volume Percent:', percent))
     // the device needs to complete an action
     .on('device-action', action => {
-      if(action.inputs[0].payload.commands[0].execution[0].command=='com.example.intents.LEDcolor')
+      if(action.inputs[0].payload.commands[0].execution[0].command=='com.example.actions.LEDcolor')
       {
          var params =action.inputs[0].payload.commands[0].execution[0].params;
          if(params.device=='RGB LED')
@@ -117,7 +120,6 @@ const startConversation = (conversation) => {
     .on('ended', (error, continueConversation) => {
       if (error) console.log('Conversation Ended Error:', error);
       else if (continueConversation) {
-        openMicAgain = true;
        }
       else {
       console.log('Conversation Complete');
@@ -126,17 +128,20 @@ const startConversation = (conversation) => {
     })
     // catch any errors
     .on('error', (error) => {
-      console.log( config.conversation.textQuery);
+      record.stop();
       console.log('Conversation Error:', error);
     });
-    
-  // pass the mic audio to the assistant
-  const mic = record.start({ threshold: 0.5, silence: 1.0, recordProgram: 'arecord', device: 'plughw:1,0' });
-  mic.on('data', data => 
+
+  if(InputType=="Speech")  
   {
-    conversation.write(data);
-    //assistant.start(config.conversation);
-  });
+    // pass the mic audio to the assistant
+    const mic = record.start({ threshold: 0.5, silence: 1.0,verbose: true, recordProgram: 'arecord', device: 'plughw:1,0' });
+    mic.on('data', data => 
+    {
+      conversation.write(data);
+    });
+  }
+  
   
   // setup the speaker
   const speaker = new Speaker({
@@ -151,22 +156,33 @@ const startConversation = (conversation) => {
     })
     .on('close', () => {
       console.log('Assistant Finished Speaking');
-      if (openMicAgain) assistant.start(config.conversation);
     });
   };
 
 const promptForInput = (pData) => {  
+      InputType="Text";
       config.conversation.textQuery = pData;
       assistant.start(config.conversation);
       config.conversation.textQuery=undefined;
 };
 
+pushButton.watch(function (err, value) { //Watch for hardware interrupts on pushButton GPIO, specify callback function
+  if (err) { //if an error
+    console.error('There was an error', err); //output error message to console
+  return;
+  }
+  console.log(value);
+  if(value==1)
+  {
+    InputType="Speech";
+    assistant.start(config.conversation);
+  }
+});
+
 
 // setup the assistant
 assistant
 .on('ready', () => {
- // start a conversation!
- assistant.start(config.conversation);
 })
 .on('started', startConversation)
 .on('error', (error) => {
@@ -185,4 +201,3 @@ io.on('connection', function (socket) {
     promptForInput(data);
   });
 });
-
