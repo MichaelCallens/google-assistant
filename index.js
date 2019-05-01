@@ -1,11 +1,18 @@
 import express from 'express';
+const delay = require('delay');
 var Gpio = require('onoff').Gpio; 
+const i2c = require('i2c-bus');
 
 var LED = new Gpio(25, 'out'); 
 var LedR = new Gpio(5, 'out'); 
 var LedG = new Gpio(6, 'out'); 
 var LedB = new Gpio(13, 'out'); 
 var pushButton = new Gpio(21, 'in', 'both');
+var request="";
+var blinkInterval;
+var temp;
+var ReadTempSensor1=0;
+
 
 const app  = express();
 const PORT = 3000;
@@ -19,6 +26,8 @@ const path = require('path');
 const GoogleAssistant = require('google-assistant');
 const speakerHelper = require('./examples/speaker-helper');
 const readline = require('readline');
+
+const TC74_ADDR = 0b1001000;
 
 
 const config = {
@@ -57,61 +66,66 @@ const startConversation = (conversation) => {
     // done speaking, close the mic
     .on('end-of-utterance', () => record.stop())
     // just to spit out to the console what was said (as we say it)
-    .on('transcription', data => console.log('Transcription:', data.transcription, ' --- Done:', data.done))
+    .on('transcription', data => {
+      console.log('Transcription:', data.transcription, ' --- Done:', data.done);
+      if(data.done==true)
+        request = data.transcription;
+    })
     // what the assistant said back
     .on('response', text => {
       if(text!="")
       {
-        console.log('Assistant Text Response:', text);
-        io.emit('message',text);
-      }           
+        if(ReadTempSensor1==1)
+        {
+          io.emit('message',{Request : request,Response : text + temp});
+          ReadTempSensor1=0;
+        }
+        else
+        {
+          console.log('Assistant Text Response:', text);
+          io.emit('message',{Request : request,Response : text});
+        }
+
+      }
+      else 
+        io.emit('message',{Request : request,Response : "can you say it again"});         
     })
     // if we've requested a volume level change, get the percentage of the new level
     
     .on('volume-percent', percent => console.log('New Volume Percent:', percent))
     // the device needs to complete an action
     .on('device-action', action => {
-      if(action.inputs[0].payload.commands[0].execution[0].command=='com.example.actions.LEDcolor')
+      console.log(action.inputs[0].payload.commands[0].execution[0].command);
+      console.log(action.inputs[0].payload.commands[0].execution[0].params);
+      var command=action.inputs[0].payload.commands[0].execution[0].command;
+      var params =action.inputs[0].payload.commands[0].execution[0].params;
+      if(command=='com.example.commands.LEDcolor')
       {
-         var params =action.inputs[0].payload.commands[0].execution[0].params;
-         if(params.device=='RGB LED')
-         {
-          switch(params.color) {
-            case 'blue':
-              LedR.writeSync(0); //set pin state to 0 (turn LED off)
-              LedG.writeSync(0); //set pin state to 0 (turn LED off)
-              LedB.writeSync(1); //set pin state to 1 (turn LED on)
-              break;
-            case 'red':
-              LedR.writeSync(1); //set pin state to 1 (turn LED on)
-              LedG.writeSync(0); //set pin state to 0 (turn LED off)
-              LedB.writeSync(0); //set pin state to 0 (turn LED off)
-              break;
-            case 'green':
-              LedR.writeSync(0); //set pin state to 0 (turn LED off)
-              LedG.writeSync(1); //set pin state to 1 (turn LED on)
-              LedB.writeSync(0); //set pin state to 0 (turn LED off)
-              break;  
-            case 'yellow':
-              LedR.writeSync(1); //set pin state to 1 (turn LED on)
-              LedG.writeSync(1); //set pin state to 1 (turn LED on)
-              LedB.writeSync(0); //set pin state to 0 (turn LED off)
-              break;  
-            case 'white':
-              LedR.writeSync(1); //set pin state to 1 (turn LED on)
-              LedG.writeSync(1); //set pin state to 1 (turn LED on)
-              LedB.writeSync(1); //set pin state to 1 (turn LED on)
-              break;  
-            default:
-              LedR.writeSync(0); //set pin state to 0 (turn LED off)
-              LedG.writeSync(0); //set pin state to 0 (turn LED off)
-              LedB.writeSync(0); //set pin state to 0 (turn LED off)
-              break;  
-              // code block
-          }
-         }
-         else console.log("fout device")
+         LedColorAction(params);
       }
+      if(command=='com.example.commands.mydevices')
+      {
+         mydevicesAction(params);
+      }
+      if(command=='com.example.commands.mydevices')
+      {
+         mydevicesAction(params);
+      }
+      if(command=='com.example.commands.BlinkLight')
+      {
+        BlinkLightAction(params);
+      }
+      if(command=='com.example.commands.TemperatureHome')
+      {
+        if(params.device=="TEMP SENSOR")
+        {
+          ReadTempSensor1=1;
+          displayTemperature();
+        }
+      }
+      
+
+      
 
 
     })
@@ -179,6 +193,135 @@ pushButton.watch(function (err, value) { //Watch for hardware interrupts on push
   }
 });
 
+const LedColorAction = (params) => { 
+  if(params.device=='RGB LED')
+  {
+    switch(params.color) {
+      case 'blue':
+        LedR.writeSync(0); //set pin state to 0 (turn LED off)
+        LedG.writeSync(0); //set pin state to 0 (turn LED off)
+        LedB.writeSync(1); //set pin state to 1 (turn LED on)
+        break;
+      case 'red':
+        LedR.writeSync(1); //set pin state to 1 (turn LED on)
+        LedG.writeSync(0); //set pin state to 0 (turn LED off)
+        LedB.writeSync(0); //set pin state to 0 (turn LED off)
+        break;
+      case 'green':
+        LedR.writeSync(0); //set pin state to 0 (turn LED off)
+        LedG.writeSync(1); //set pin state to 1 (turn LED on)
+        LedB.writeSync(0); //set pin state to 0 (turn LED off)
+        break;  
+      case 'yellow':
+        LedR.writeSync(1); //set pin state to 1 (turn LED on)
+        LedG.writeSync(1); //set pin state to 1 (turn LED on)
+        LedB.writeSync(0); //set pin state to 0 (turn LED off)
+        break;  
+      case 'white':
+        LedR.writeSync(1); //set pin state to 1 (turn LED on)
+        LedG.writeSync(1); //set pin state to 1 (turn LED on)
+        LedB.writeSync(1); //set pin state to 1 (turn LED on)
+        break;  
+      default:
+        LedR.writeSync(0); //set pin state to 0 (turn LED off)
+        LedG.writeSync(0); //set pin state to 0 (turn LED off)
+        LedB.writeSync(0); //set pin state to 0 (turn LED off)
+        break;  
+        // code block
+    }
+  }
+  else console.log("fout device")
+}
+
+const mydevicesAction = (params) => {
+  var status=0;
+  if(params.status=='ON')
+    status=1;
+  switch(params.device){
+    case 'LED1':
+      LED.writeSync(status);
+      break;
+    case 'LED2':break;
+    case 'LED3':break;
+    case 'RGB LED':
+      LedR.writeSync(status); 
+      LedG.writeSync(status); 
+      LedB.writeSync(status); 
+      break;
+    default:
+      break;
+  }
+}
+const BlinkLightAction = (params) => {
+  var Speed;
+  var blinkCount=params.number*2;
+  switch(params.speed){
+    case 'SLOWLY':
+      Speed=2000;
+      break;
+    case 'NORMALLY':
+      Speed=1000;
+      break;
+    case 'QUICKLY':
+      Speed=500;
+      break;
+  }
+  
+  switch(params.device){
+    case 'LED1':
+    blinkInterval= setInterval(function() {       
+        if (LED.readSync() === 0) { //check the pin state, if the state is 0 (or off)
+          LED.writeSync(1);
+          console.log("aan");
+        } else {
+        LED.writeSync(0);
+        console.log("af");
+        }
+        blinkCount--;
+        if (blinkCount==0) {
+            clearInterval(blinkInterval);
+        }
+      }, Speed);
+      break;
+    case 'LED2':break;
+    case 'LED3':break;
+    case 'RGB LED':
+      blinkInterval= setInterval(function() {       
+        if (LedB.readSync() === 0 && LedG.readSync() === 0 && LedR.readSync() === 0) { //check the pin state, if the state is 0 (or off)
+          LedR.writeSync(1); 
+          LedG.writeSync(1); 
+          LedB.writeSync(1);
+        } else {
+          LedR.writeSync(0); 
+          LedG.writeSync(0); 
+          LedB.writeSync(0);
+        }
+        blinkCount--;
+        if (blinkCount==0) {
+            clearInterval(blinkInterval);
+        }
+      }, Speed);
+      setTimeout(function() {
+        LedR.writeSync(1); 
+        LedG.writeSync(1); 
+        LedB.writeSync(1);
+      }, Speed);
+      setTimeout(function() {
+        LedR.writeSync(0); 
+        LedG.writeSync(0); 
+        LedB.writeSync(0);
+      }, Speed);
+      break;
+    default:
+      break;
+  }
+}
+
+const displayTemperature = () => {
+  const i2c1 = i2c.openSync(1);
+  temp=i2c1.readByteSync(TC74_ADDR, 0)+"°C"
+  i2c1.closeSync();
+};
 
 // setup the assistant
 assistant
@@ -198,6 +341,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', function (socket) {
   socket.on('textInput', function(data) { 
+    request=data;
     promptForInput(data);
   });
+  socket.on('Speech', function(data) { 
+    InputType="Speech";
+    assistant.start(config.conversation);  
+  });
+  
 });
