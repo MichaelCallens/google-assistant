@@ -36,6 +36,9 @@
                     <div class="col-xs-3">
                       <button class="btn btn-primary btn-block" onclick="SendData()" >Send</button>
                     </div>
+                    <div class="col-2">
+                    <input class="btn btn-secondary" id="SpeechButton" type="button" onclick="StartSpeech()" value="Speech">
+                  </div>
                   </div>
                 </div>
               </div>
@@ -45,26 +48,51 @@
           
       
       
-      <script src="http://pimic:3000/socket.io/socket.io.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.dev.js"></script>
       <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
       <script>
-        var myVar = setInterval(myTimer, 1000);
+        //var myVar = setInterval(myTimer, 1000);
         var socket = io.connect();
+        var SpeechButton = document.getElementById("SpeechButton");
         var msgText="";
-        function myTimer() {            
-            socket.on('message', function(msg){
-            if(msgText!=msg)
+        var SpeechValue="0";
+        socket.on('message', function(msg){
+          $('.list-unstyled').append($('<li>').addClass("mar-btm").append($('<div>').addClass("media-body pad-hor speech-right").append($('<div>').addClass("speech").append([
+            $('<a>').text("User").addClass("media-heading"),
+            $('<p>').text(msg.Request)
+            ]))));  
+          $('.list-unstyled').append($('<li>').addClass("mar-btm").append($('<div>').addClass("media-body pad-hor").append($('<div>').addClass("speech").append([
+            $('<a>').text("google-assistant").addClass("media-heading"),
+            $('<p>').text(msg.Response)
+            ]))));             
+        });
+      $('#TextInput').keypress(function(event){
+        if (event.keyCode == 13) {
+          SendData();
+        }
+      });
+        
+
+        function StartSpeech() {
+            SpeechButton.className="btn btn-success";
+            if(SpeechValue!="1")
             {
-                $('.list-unstyled').append($('<li>').addClass("mar-btm").append($('<div>').addClass("media-body pad-hor").append($('<div>').addClass("speech").text(msg))));
-                msgText=msg;
-            }        
-            });
+              SpeechValue="1";
+              socket.emit("Speech", SpeechValue);
+            }
+            setTimeout(ResetSpeech, 16000);                     
+        }
+        function ResetSpeech() {
+          SpeechButton.className="btn btn-secondary";
+          SpeechValue="0";
         }
 
-        function SendData() {      
-            var textData = document.getElementById("TextInput");
+
+        function SendData() {     
+          if(SpeechValue!="1") {
             socket.emit("textInput", TextInput.value);        
-            $('.list-unstyled').append($('<li>').addClass("mar-btm").append($('<div>').addClass("media-body pad-hor speech-right").append($('<div>').addClass("speech").text(TextInput.value))));
+            TextInput.value = "";
+          }           
         }
 
       
