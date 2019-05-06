@@ -25,7 +25,10 @@ const Speaker = require('speaker');
 const path = require('path');
 const GoogleAssistant = require('google-assistant');
 const speakerHelper = require('./examples/speaker-helper');
+var mqttHandler = require('./examples/mqtt_handler');
 const readline = require('readline');
+var mqttClient = new mqttHandler();
+mqttClient.connect();
 
 const TC74_ADDR = 0b1001000;
 
@@ -321,6 +324,7 @@ const displayTemperature = () => {
   const i2c1 = i2c.openSync(1);
   temp=i2c1.readByteSync(TC74_ADDR, 0)+"°C"
   i2c1.closeSync();
+  mqttClient.sendMessage(temp);
 };
 
 // setup the assistant
