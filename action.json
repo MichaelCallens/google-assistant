@@ -1,12 +1,12 @@
 {
     "manifest": {
-        "displayName": "Devices on/off",
-        "invocationName": "Devices on/off",
+        "displayName": "Google Pi",
+        "invocationName": "Google Pi",
         "category": "PRODUCTIVITY"
     },
     "actions": [
         {
-            "name": "com.example.actions.mydevices",
+            "name": "com.example.actions.MyDevices",
             "availability": {
                 "deviceClasses": [
                     {
@@ -15,7 +15,7 @@
                 ]
             },
             "intent": {
-                "name": "com.example.intents.mydevices",
+                "name": "com.example.intents.MyDevices",
                 "parameters": [
                     {
                         "name": "status",
@@ -23,13 +23,13 @@
                     },
                     {
                         "name": "device",
-                        "type": "Device"
+                        "type": "LightDevice"
                     }
                 ],
                 "trigger": {
                     "queryPatterns": [
-                        "Turn $Status:status $Device:device",
-                        "Turn $Device:device $Status:status"
+                        "Turn $Status:status $LightDevice:device",
+                        "Turn $LightDevice:device $Status:status"
                     ]
                 }
             },
@@ -44,7 +44,7 @@
                             },
                             {
                                 "deviceExecution": {
-                                    "command": "com.example.commands.mydevices",
+                                    "command": "com.example.commands.MyDevices",
                                     "params": {
                                         "status": "$status",
                                         "device": "$device"
@@ -70,97 +70,40 @@
                 "parameters": [
                     {
                         "name": "device",
-                        "type": "Device"
+                        "type": "TemperatureDevice"
                     }
                 ],
                 "trigger": {
                     "queryPatterns": [
-                        "Whats the temperature of $Device:device"
+                        "What is the temperature of $TemperatureDevice:device",
+                        "What's the temperature of $TemperatureDevice:device"
                     ]
                 }
             },
             "fulfillment": {
                 "staticFulfillment": {
                     "templatedResponse": {
-                        "items": [                           
+                        "items": [
                             {
-                                    "simpleResponse": {
-                                        "textToSpeech": "The temperature is: "
-                                    }
-                                },
-                                {
-                                    "deviceExecution": {
-                                        "command": "com.example.commands.TemperatureHome",
-                                        "params": {
-                                            "device": "$device"
-                                        }
+                                "simpleResponse": {
+                                    "textToSpeech": "The temperature is: "
+                                }
+                            },
+                            {
+                                "deviceExecution": {
+                                    "command": "com.example.commands.TemperatureHome",
+                                    "params": {
+                                        "device": "$device"
                                     }
                                 }
-                            ]
-                        }
-                    }
-                }  
-             },
-            {
-                "name": "com.example.actions.BlinkLight",
-                "availability": {
-                    "deviceClasses": [
-                        {
-                            "assistantSdkDevice": {}
-                        }
-                    ]
-                },
-                "intent": {
-                    "name": "com.example.intents.BlinkLight",
-                    "parameters": [
-                        {
-                            "name": "number",
-                            "type": "SchemaOrg_Number"
-                        },
-                        {
-                            "name": "device",
-                            "type": "Device"
-                        },
-                        {
-                            "name": "speed",
-                            "type": "Speed"
-                        }
-                    ],
-                    "trigger": {
-                        "queryPatterns": [
-                            "blink ($Speed:speed)? $Device:device $SchemaOrg_Number:number times",
-                            "blink $Device:device $SchemaOrg_Number:number times ($Speed:speed)?",
-                            "($Speed:speed)? blink $Device:device $SchemaOrg_Number:number times"
+                            }
                         ]
                     }
-                },
-                "fulfillment": {
-                    "staticFulfillment": {
-                        "templatedResponse": {
-                            "items": [
-                                {
-                                    "simpleResponse": {
-                                        "textToSpeech": "Blinking $device $speed $number times"
-                                    }
-                                },
-                                {
-                                    "deviceExecution": {
-                                        "command": "com.example.commands.BlinkLight",
-                                        "params": {
-                                            "device":"$device",
-                                            "speed": "$speed",
-                                            "number": "$number"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
                 }
-            },
-            
+            }
+        },
         {
-            "name": "com.example.actions.LEDcolor",
+            "name": "com.example.actions.BlinkLight",
             "availability": {
                 "deviceClasses": [
                     {
@@ -169,7 +112,64 @@
                 ]
             },
             "intent": {
-                "name": "com.example.intents.LEDcolor",
+                "name": "com.example.intents.BlinkLight",
+                "parameters": [
+                    {
+                        "name": "number",
+                        "type": "SchemaOrg_Number"
+                    },
+                    {
+                        "name": "device",
+                        "type": "Device"
+                    },
+                    {
+                        "name": "speed",
+                        "type": "Speed"
+                    }
+                ],
+                "trigger": {
+                    "queryPatterns": [
+                        "blink ($Speed:speed)? $Device:device $SchemaOrg_Number:number times",
+                        "blink $Device:device $SchemaOrg_Number:number times ($Speed:speed)?",
+                        "($Speed:speed)? blink $Device:device $SchemaOrg_Number:number times"
+                    ]
+                }
+            },
+            "fulfillment": {
+                "staticFulfillment": {
+                    "templatedResponse": {
+                        "items": [
+                            {
+                                "simpleResponse": {
+                                    "textToSpeech": "Blinking $device $speed $number times"
+                                }
+                            },
+                            {
+                                "deviceExecution": {
+                                    "command": "com.example.commands.BlinkLight",
+                                    "params": {
+                                        "device":"$device",
+                                        "speed": "$speed",
+                                        "number": "$number"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "name": "com.example.actions.LEDColor",
+            "availability": {
+                "deviceClasses": [
+                    {
+                        "assistantSdkDevice": {}
+                    }
+                ]
+            },
+            "intent": {
+                "name": "com.example.intents.LEDColor",
                 "parameters": [
                     {
                         "name": "color",
@@ -183,7 +183,6 @@
                 "trigger": {
                     "queryPatterns": [
                         "set $Device:device on $SchemaOrg_Color:color"
-                        
                     ]
                 }
             },
@@ -198,7 +197,7 @@
                             },
                             {
                                 "deviceExecution": {
-                                    "command": "com.example.commands.LEDcolor",
+                                    "command": "com.example.commands.LEDColor",
                                     "params": {
                                         "device": "$device",
                                         "color": "$color"
@@ -240,7 +239,7 @@
             ]
         },
         {
-            "name": "$Device",
+            "name": "$LightDevice",
             "entities": [
                 {
                     "key":"LED1",
@@ -292,7 +291,12 @@
                         "all devices",
                         "all lights"
                     ]
-                },
+                }
+            ]
+        },
+        {
+            "name": "$TemperatureDevice",
+            "entities": [
                 {
                     "key":"TEMP SENSOR",
                     "synonyms": [
@@ -310,20 +314,21 @@
                     "key":"ON",
                     "synonyms": [
                         "on",
-                        "true"
+                        "true",
+                        "1"
                     ]
                 },
                 {
                     "key":"OFF",
                     "synonyms": [
                         "off",
-                        "false"
+                        "false",
+                        "0"
                     ]
                 }
                 
             ]
         }
-        
-        
-    ]
+    ],
+    "locale": "en"
 }

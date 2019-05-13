@@ -1,102 +1,115 @@
 <!doctype html>
 <html lang="en">
-	<head>
-      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-      <link rel="stylesheet" href="CSS/mystyle.css">
+
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+            integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        <link rel="stylesheet" href="CSS/mystyle.css">
     </head>
+
     <body>
-      <div class="jumbotron jumbotron-fluid bg-info text-white col-12">
-          <div class="container">
-              <h1>Google Assistant</h1>         
-          </div>   
-      </div>
-     
-      <div class="container">
-          <div class="col-md-12 col-lg-6">
-              <div class="panel">
-                <!--Heading-->
-              <div class="panel-heading">
-                <h3 class="panel-title">Chat</h3>
-              </div>
-          
-              <!--Widget body-->
-              <div id="demo-chat-body" >
-                <div class="nano has-scrollbar" style="height:380px">
-                  <div class="nano-content pad-all" tabindex="0" style="right: -17px;">
-                    <ul class="list-unstyled media-block"></ul>
-                  </div>
-                <div class="nano-pane"><div class="nano-slider" style="height: 141px; transform: translate(0px, 0px);"></div></div></div>
-          
-                <!--Widget footer-->
-                <div class="panel-footer">
-                  <div class="row">
-                    <div class="col-xs-9">
-                      <input type="text" placeholder="Enter your text" id="TextInput" class="form-control chat-input">
-                    </div>
-                    <div class="col-xs-3">
-                      <button class="btn btn-primary btn-block" onclick="SendData()" >Send</button>
-                    </div>
-                    <div class="col-2">
-                    <input class="btn btn-secondary" id="SpeechButton" type="button" onclick="StartSpeech()" value="Speech">
-                  </div>
-                  </div>
-                </div>
-              </div>
+        <div class="jumbotron jumbotron-fluid bg-info text-white col-12">
+            <div class="container">
+                <h1>Google Assistant</h1>
             </div>
-          </div>
-      </div>
-          
-      
-      
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.dev.js"></script>
-      <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-      <script>
-        //var myVar = setInterval(myTimer, 1000);
-        var socket = io.connect();
-        var SpeechButton = document.getElementById("SpeechButton");
-        var msgText="";
-        var SpeechValue="0";
-        socket.on('message', function(msg){
-          $('.list-unstyled').append($('<li>').addClass("mar-btm").append($('<div>').addClass("media-body pad-hor speech-right").append($('<div>').addClass("speech").append([
-            $('<a>').text("User").addClass("media-heading"),
-            $('<p>').text(msg.Request)
-            ]))));  
-          $('.list-unstyled').append($('<li>').addClass("mar-btm").append($('<div>').addClass("media-body pad-hor").append($('<div>').addClass("speech").append([
-            $('<a>').text("google-assistant").addClass("media-heading"),
-            $('<p>').text(msg.Response)
-            ]))));             
-        });
-      $('#TextInput').keypress(function(event){
-        if (event.keyCode == 13) {
-          SendData();
-        }
-      });
-        
+        </div>
 
-        function StartSpeech() {
-            SpeechButton.className="btn btn-success";
-            if(SpeechValue!="1")
-            {
-              SpeechValue="1";
-              socket.emit("Speech", SpeechValue);
+        <div class="container">
+            <div class="col-md-12 col-lg-6">
+                <div class="panel">
+                    <!--Heading-->
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Chat</h3>
+                    </div>
+
+                    <!--Widget body-->
+                    <div id="demo-chat-body">
+                        <div class="nano has-scrollbar" style="height:380px">
+                            <div class="nano-content pad-all" tabindex="0" style="right: -17px;">
+                                <ul class="list-unstyled media-block"></ul>
+                            </div>
+                            <div class="nano-pane">
+                                <div class="nano-slider" style="height: 141px; transform: translate(0px, 0px);"></div>
+                            </div>
+                        </div>
+
+                        <!--Widget footer-->
+                        <div class="panel-footer">
+                            <div class="row">
+                                <div class="col-xs-9">
+                                    <input id="TextInput" type="text" class="form-control chat-input" placeholder="Enter your text" onkeypress="return KeyPressed(event)">
+                                </div>
+                                <div class="col-xs-3">
+                                    <button class="btn btn-primary btn-block" onclick="SendData()">Send</button>
+                                </div>
+                                <div class="col-2">
+                                    <input id="SpeechButton" type="button" class="btn btn-secondary" value="Speech" onclick="StartSpeech()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.dev.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+        <script>
+            var socket = io.connect();
+            var msgText = '';
+            var isSpeech = false;
+
+            socket.on('message', function (msg) {
+                $('.list-unstyled').append(
+                    $('<li>').addClass('mar-btm').append(
+                        $('<div>').addClass('media-body pad-hor speech-right').append(
+                            $('<div>').addClass('speech').append([
+                                $('<a>').text('User').addClass('media-heading'),
+                                $('<p>').text(msg.Request)
+                            ])
+                        )
+                    )
+                );
+                $('.list-unstyled').append(
+                    $('<li>').addClass('mar-btm').append(
+                        $('<div>').addClass('media-body pad-hor').append(
+                            $('<div>').addClass('speech').append([
+                                $('<a>').text('google-assistant').addClass('media-heading'),
+                                $('<p>').text(msg.Response)
+                            ])
+                        )
+                    )
+                );
+            })
+            
+            function SendData() {
+                if (TextInput.value != '' && !isSpeech) {
+                    socket.emit('textInput', TextInput.value);
+                    TextInput.value = '';
+                }
             }
-            setTimeout(ResetSpeech, 16000);                     
-        }
-        function ResetSpeech() {
-          SpeechButton.className="btn btn-secondary";
-          SpeechValue="0";
-        }
 
+            function KeyPressed(e) {
+                var keycode = (event.keyCode ? event.keyCode : event.which);
+                if (keycode == 13) {
+                    SendData();
+                }
+            }
 
-        function SendData() {     
-          if(SpeechValue!="1") {
-            socket.emit("textInput", TextInput.value);        
-            TextInput.value = "";
-          }           
-        }
+            function StartSpeech() {
+                SpeechButton.className = 'btn btn-success';
+                if (!isSpeech) {
+                    isSpeech = true;
+                    socket.emit('IsSpeech', isSpeech);
+                }
+                setTimeout(ResetSpeech, 16000);
+            }
 
-      
-      </script>	
-      <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+            function ResetSpeech() {
+                SpeechButton.className = 'btn btn-secondary';
+                isSpeech = false;
+            }
+        </script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
     </body>
 </html>
