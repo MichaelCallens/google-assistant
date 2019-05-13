@@ -1,12 +1,12 @@
 const mqtt = require('mqtt');
 
 class MqttHandler {
-  constructor() {
-    this.port= 	14814,
-    this.mqttClient = null;
-    this.host = 'mqtt://m20.cloudmqtt.com';
-    this.username = 'ojewjyuk'; // mqtt credentials if these are needed to connect
-    this.password = 'Dm0SyGDRvvOT';
+  constructor(_mqttCreds) {
+    this.port= _mqttCreds.port	,
+    this.mqttClient = _mqttCreds.mqttClient;
+    this.host = _mqttCreds.host;
+    this.username = _mqttCreds.username; // mqtt credentials if these are needed to connect
+    this.password = _mqttCreds.password;
   }
   
   connect() {
@@ -42,5 +42,6 @@ class MqttHandler {
     this.mqttClient.publish('mytopic', message);
   }
 }
+
 
 module.exports = MqttHandler;
