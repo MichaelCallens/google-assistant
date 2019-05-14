@@ -212,7 +212,6 @@ const startConversation = (conversation) => {
         speakerHelper.update(data);
         console.log(data) ;
     })
-    //////// MSS NIET MEER NODIG
     .on('end-of-utterance', () => {
         // done speaking, close the mic
         record.stop();
