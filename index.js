@@ -1,5 +1,6 @@
 //#region INIT, REQUIRE, CONFIG
 import express from 'express';
+
 const app = express();
 const port = 3000;
 const { hostname } = require('os');
@@ -33,9 +34,12 @@ var io = require('socket.io').listen(server, () => {
     console.log('socket.io running on server');
 });
 
+const fs = require('fs');
+let rawdata = fs.readFileSync('./loginMQTT.json');
+let jsondata = JSON.parse(rawdata);
 var mqttHandler = require('./examples/mqtt_handler');
-var mqttClient = new mqttHandler();
-mqttClient.connect();
+var mqttClient = new mqttHandler(jsondata);
+mqttClient.connect(jsondata);
 
 const config = {
     auth: {
@@ -206,7 +210,9 @@ const startConversation = (conversation) => {
     .on('audio-data', (data) => {
         // send the audio buffer to the speaker
         speakerHelper.update(data);
+        console.log(data) ;
     })
+    //////// MSS NIET MEER NODIG
     .on('end-of-utterance', () => {
         // done speaking, close the mic
         record.stop();
