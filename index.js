@@ -1,5 +1,4 @@
 import express from 'express';
-const delay = require('delay');
 var Gpio = require('onoff').Gpio; 
 const i2c = require('i2c-bus');
 
@@ -25,10 +24,13 @@ const Speaker = require('speaker');
 const path = require('path');
 const GoogleAssistant = require('google-assistant');
 const speakerHelper = require('./examples/speaker-helper');
+
+const fs = require('fs');
+let rawdata = fs.readFileSync('./loginMQTT.json');  
+let jsondata = JSON.parse(rawdata);   
 var mqttHandler = require('./examples/mqtt_handler');
-const readline = require('readline');
-var mqttClient = new mqttHandler();
-mqttClient.connect();
+var mqttClient = new mqttHandler(jsondata);
+mqttClient.connect(jsondata);
 
 const TC74_ADDR = 0b1001000;
 
@@ -65,6 +67,7 @@ const startConversation = (conversation) => {
     // send the audio buffer to the speaker
     .on('audio-data', (data) => {
       speakerHelper.update(data);
+      console.log(data) ;
     })
     // done speaking, close the mic
     .on('end-of-utterance', () => record.stop())
@@ -110,10 +113,6 @@ const startConversation = (conversation) => {
       {
          mydevicesAction(params);
       }
-      if(command=='com.example.commands.mydevices')
-      {
-         mydevicesAction(params);
-      }
       if(command=='com.example.commands.BlinkLight')
       {
         BlinkLightAction(params);
@@ -127,9 +126,6 @@ const startConversation = (conversation) => {
         }
       }
       
-
-      
-
 
     })
     // once the conversation is ended, see if we need to follow up
