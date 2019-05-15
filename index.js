@@ -161,7 +161,7 @@ const ComExampleCommandsBlinkLight = (params) => {
 const ComExampleCommandsLEDColor = (params) => {
     if (params.device == 'RGB LED') {
         switch (params.color) {
-            case 'blue':
+            case 'blue':             
                 LedR.writeSync(0);
                 LedG.writeSync(0);
                 LedB.writeSync(1);
@@ -191,8 +191,6 @@ const ComExampleCommandsLEDColor = (params) => {
                 LedG.writeSync(0);
                 LedB.writeSync(0);
             break;
-            default:
-            break;
         }        
     }    
     else console.log('fout device')
@@ -210,7 +208,6 @@ const startConversation = (conversation) => {
     .on('audio-data', (data) => {
         // send the audio buffer to the speaker
         speakerHelper.update(data);
-        console.log(data) ;
     })
     .on('end-of-utterance', () => {
         // done speaking, close the mic
@@ -227,8 +224,8 @@ const startConversation = (conversation) => {
         // what the assistant said back
         if (text != '') {
             if (readTempSensor) {
-                console.log('Assistant Text Response:', text + temperature);
-                io.emit('message', { Request: request, Response: text + temperature });
+                console.log('Assistant Text Response:', "The temperature is:" + temperature);
+                io.emit('message', { Request: request, Response: "The temperature is: " + temperature });
                 readTempSensor = false;
             }
             else {
