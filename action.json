@@ -86,7 +86,7 @@
               "items": [
                 {
                   "simpleResponse": {
-                    "textToSpeech": "The temperature is: "
+                    "textToSpeech": "You can read the temperature in the chat on the website. "
                   }
                 },
                 {
@@ -192,7 +192,7 @@
               "items": [
                 {
                   "simpleResponse": {
-                    "textToSpeech": "The color is $color"
+                    "textToSpeech": "The color of $device is set on $color"
                   }
                 },
                 {
