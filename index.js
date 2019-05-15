@@ -258,7 +258,6 @@ const startConversation = (conversation) => {
                 ComExampleCommandsBlinkLight(params);
             break;
             case 'com.example.commands.LEDColor':
-                console.log('blue');
                 ComExampleCommandsLEDColor(params);
             break;
             default:
