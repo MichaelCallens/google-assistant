@@ -25,7 +25,7 @@ class MqttHandler {
         });
 
         // mqtt subscriptions
-        this.mqttClient.subscribe('mytopic', { qos: 0 });
+        this.mqttClient.subscribe('GoogleAssistant', { qos: 0 });
 
         // When a message arrives, console.log it
         this.mqttClient.on('message', function (topic, message) {
@@ -39,7 +39,7 @@ class MqttHandler {
 
     // Sends a mqtt message to topic: mytopic
     sendMessage(message) {
-        this.mqttClient.publish('mytopic', message);
+        this.mqttClient.publish('GoogleAssistant', message);
     }
 }
 
