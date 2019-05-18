@@ -39,7 +39,7 @@ let rawdata = fs.readFileSync('./loginMQTT.json');
 let jsondata = JSON.parse(rawdata);
 var mqttHandler = require('./examples/mqtt_handler');
 var mqttClient = new mqttHandler(jsondata);
-mqttClient.connect(jsondata);
+mqttClient.connect();
 
 const config = {
     auth: {
