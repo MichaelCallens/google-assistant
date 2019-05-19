@@ -234,8 +234,10 @@ const startConversation = (conversation) => {
             }
         }
         else {
+            if(request!="")
             io.emit('message', { Request: request, Response: "Sorry, I didn't get that. Can you say it again?" });
         }
+        request="";
     })
     .on('volume-percent', (percent) => {
         // if we've requested a volume level change, get the percentage of the new level
@@ -258,6 +260,7 @@ const startConversation = (conversation) => {
                 ComExampleCommandsBlinkLight(params);
             break;
             case 'com.example.commands.LEDColor':
+                console.log('blue');
                 ComExampleCommandsLEDColor(params);
             break;
             default:
