@@ -94,13 +94,12 @@ const ComExampleCommandsBlinkLight = (params) => {
         case 'SLOWLY':
             Speed = 2000;
         break;
-        case 'NORMALLY':
-            Speed = 1000;
-        break;
         case 'QUICKLY':
             Speed = 500;
         break;
+        case 'NORMALLY':
         default:
+			Speed = 1000;
         break;
     }
     
@@ -186,6 +185,7 @@ const ComExampleCommandsLEDColor = (params) => {
                 LedG.writeSync(1);
                 LedB.writeSync(1);
             break;
+			case 'black':
             default:
                 LedR.writeSync(0);
                 LedG.writeSync(0);
