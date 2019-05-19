@@ -1,3 +1,3 @@
 #!/bin/bash
-ehco "Starting Google Assistant server..."
+echo "Starting Google Assistant server..."
 npm start
